@@ -556,12 +556,10 @@ canvas.spinning {
 <body>
 <div class="wrap">
 <header>
-<h1>🎡 Jeu des 6 Roues de Casino</h1>
+<h1>🎡 Jeu des 6 Roues - Casino</h1>
 <div class="controls">
 <button id="startBtn">🎯 LANCER</button>
 <button id="stopBtn" disabled>⏹️ ARRÊTER</button>
-<label style="color: #ccc;">Max tours:</label>
-<input type="number" id="maxTurns" value="100" min="1" max="10000" style="width:90px">
 <button id="speedBtn">⚡ ACCÉLÉRER</button>
 <button id="resetBtn">🔄 RESET</button>
 </div>
@@ -644,12 +642,8 @@ canvas.spinning {
 <div class="value" id="totalWins">0</div>
 </div>
 <div class="statItem">
-<h3>Tour Actuel</h3>
-<div class="value" id="currentRound">0</div>
-</div>
-<div class="statItem">
-<h3>Pièces</h3>
-<div class="value" id="coins">1000</div>
+<h3>Jackpots</h3>
+<div class="value" id="jackpotsWon">0</div>
 </div>
 </div>
 </div>
@@ -661,7 +655,7 @@ canvas.spinning {
 <p id="winDescription">Vous avez obtenu 6 fois :</p>
 <div class="winColor" id="winColorDisplay"></div>
 <p id="winRoundsText">En <span id="winRounds">0</span> tours !</p>
-<div class="jackpotWin" id="jackpotWin" style="display: none;">JACKPOT GAGNÉ : <span id="jackpotWinValue">0</span> pièces !</div>
+<div class="jackpotWin" id="jackpotWin" style="display: none;">🎰 JACKPOT GAGNÉ ! 🎰</div>
 <button onclick="closeWinMessage()" style="margin-top: 20px; padding: 12px 24px; background: linear-gradient(to bottom, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">Continuer</button>
 </div>
 </div>
@@ -688,25 +682,24 @@ const wheelTextures = {
   }
 };
 
-// Configuration des options de mise
+// Configuration des options de mise (sans coût)
 const betOptions = {
-  tofu: { name: "Tofu", cost: 5, turns: 1, reward: 20 },
-  donuts: { name: "Donuts", cost: 30, turns: 8, reward: 120 },
-  coeurs: { name: "Coeurs des familles", cost: 80, turns: 25, reward: 320 },
-  etoile: { name: "Étoile filante", cost: 150, turns: 65, reward: 600 },
-  corgie: { name: "Corgie", cost: 200, turns: 80, reward: 800 },
-  fleur: { name: "Fleur XXXL", cost: 400, turns: 160, reward: 1600 },
-  batterie: { name: "Batterie", cost: 700, turns: 300, reward: 2800 }
+  tofu: { name: "Tofu", turns: 1 },
+  donuts: { name: "Donuts", turns: 8 },
+  coeurs: { name: "Coeurs des familles", turns: 25 },
+  etoile: { name: "Étoile filante", turns: 65 },
+  corgie: { name: "Corgie", turns: 80 },
+  fleur: { name: "Fleur XXXL", turns: 160 },
+  batterie: { name: "Batterie", turns: 300 }
 };
 
 let wheels = [];
 let isPlaying = false;
 let totalTurns = 0;
 let totalWins = 0;
-let currentRound = 0;
+let jackpotsWon = 0;
 let isFastMode = false;
 let spinDuration = 2000;
-let coins = 1000;
 let currentBetOption = null;
 
 // Variables pour le jackpot
@@ -975,13 +968,8 @@ function updateJackpot() {
 function addToJackpot() {
   jackpotCounter++;
   
-  // Ajouter une contribution au jackpot basée sur le type de mise
-  if (currentBetOption) {
-    const option = betOptions[currentBetOption];
-    jackpotValue += Math.floor(option.cost * 0.1); // 10% du coût de la mise
-  } else {
-    jackpotValue += 5; // Contribution par défaut
-  }
+  // Ajouter une contribution fixe au jackpot
+  jackpotValue += 10;
   
   updateJackpot();
   
@@ -992,8 +980,8 @@ function addToJackpot() {
 }
 
 function triggerJackpot() {
-  // Gagner le jackpot
-  coins += jackpotValue;
+  jackpotsWon++;
+  updateStats();
   
   // Afficher le message de victoire du jackpot
   document.getElementById('winTitle').textContent = '🎰 JACKPOT ! 🎰';
@@ -1001,7 +989,6 @@ function triggerJackpot() {
   document.getElementById('winColorDisplay').style.display = 'none';
   document.getElementById('winRoundsText').style.display = 'none';
   document.getElementById('jackpotWin').style.display = 'block';
-  document.getElementById('jackpotWinValue').textContent = jackpotValue;
   
   // Réinitialiser le jackpot
   jackpotValue = 0;
@@ -1017,20 +1004,10 @@ function triggerJackpot() {
 
 function placeBet(betType) {
   if (isPlaying) {
-    alert("Veuillez attendre la fin de la partie en cours.");
     return;
   }
   
   const option = betOptions[betType];
-  const cost = option.cost;
-  
-  if (coins < cost) {
-    alert("Vous n'avez pas assez de pièces !");
-    return;
-  }
-  
-  coins -= cost;
-  updateStats();
   
   // Mettre à jour l'option sélectionnée
   document.querySelectorAll('.betOption').forEach(option => {
@@ -1050,10 +1027,10 @@ function placeBet(betType) {
   addToJackpot();
   
   // Lancer les roues selon l'option choisie
-  playAllWheels(option.turns, option.reward);
+  playAllWheels(option.turns);
 }
 
-async function playAllWheels(count, reward) {
+async function playAllWheels(count) {
   isPlaying = true;
   document.getElementById('startBtn').disabled = true;
   document.getElementById('stopBtn').disabled = false;
@@ -1063,6 +1040,9 @@ async function playAllWheels(count, reward) {
   for (let i = 0; i < count; i++) {
     const promises = wheels.map(wheel => wheel.spin());
     await Promise.all(promises);
+    
+    totalTurns++;
+    updateStats();
     
     // Vérifier si toutes les roues ont le même résultat
     const results = wheels.map(w => w.result);
@@ -1081,14 +1061,12 @@ async function playAllWheels(count, reward) {
       document.getElementById('winRoundsText').style.display = 'block';
       document.getElementById('jackpotWin').style.display = 'none';
       
-      setTimeout(() => showWinMessage(firstColor, winInRound, reward), 500);
+      setTimeout(() => showWinMessage(firstColor, winInRound), 500);
       
       wheels.forEach((wheel, i) => {
         document.getElementById(`wheelWrap${i}`).classList.add('winner');
       });
       
-      // Récompense pour victoire
-      coins += reward;
       updateStats();
       break;
     }
@@ -1110,52 +1088,10 @@ async function playAllWheels(count, reward) {
   }
 }
 
-async function playRound() {
-  currentRound++;
-  totalTurns++;
-  updateStats();
-
-  const maxTurns = parseInt(document.getElementById('maxTurns').value) || 100;
-  if (currentRound > maxTurns) {
-    isPlaying = false;
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-    alert(`Maximum de ${maxTurns} tours atteint sans victoire !`);
-    return;
-  }
-
-  const promises = wheels.map(wheel => wheel.spin());
-  await Promise.all(promises);
-
-  const results = wheels.map(w => w.result);
-  const firstColor = results[0];
-  const allSame = results.every(color => color === firstColor);
-
-  if (allSame) {
-    totalWins++;
-    updateStats();
-    createParticles();
-    setTimeout(() => showWinMessage(firstColor, currentRound, 0), 500);
-    isPlaying = false;
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-
-    wheels.forEach((wheel, i) => {
-      document.getElementById(`wheelWrap${i}`).classList.add('winner');
-    });
-  } else {
-    if (isPlaying) {
-      await new Promise(r => setTimeout(r, isFastMode ? 100 : 500));
-      playRound();
-    }
-  }
-}
-
 function startGame() {
   if (isPlaying) return;
 
   isPlaying = true;
-  currentRound = 0;
   document.getElementById('startBtn').disabled = true;
   document.getElementById('stopBtn').disabled = false;
 
@@ -1163,7 +1099,8 @@ function startGame() {
     document.getElementById(`wheelWrap${i}`).classList.remove('winner');
   });
 
-  playRound();
+  // Utiliser directement playAllWheels pour 1 tour
+  playAllWheels(1);
 }
 
 function stopGame() {
@@ -1176,8 +1113,7 @@ function resetGame() {
   stopGame();
   totalTurns = 0;
   totalWins = 0;
-  currentRound = 0;
-  coins = 1000;
+  jackpotsWon = 0;
   jackpotValue = 0;
   jackpotCounter = 0;
   wheels.forEach(wheel => wheel.reset());
@@ -1203,18 +1139,13 @@ function resetGame() {
 function updateStats() {
   document.getElementById('totalTurns').textContent = totalTurns;
   document.getElementById('totalWins').textContent = totalWins;
-  document.getElementById('currentRound').textContent = currentRound;
-  document.getElementById('coins').textContent = coins;
+  document.getElementById('jackpotsWon').textContent = jackpotsWon;
 }
 
-function showWinMessage(color, rounds, reward) {
+function showWinMessage(color, rounds) {
   document.getElementById('winColorDisplay').textContent = color;
   document.getElementById('winColorDisplay').style.color = colorStyles[color][0];
   document.getElementById('winRounds').textContent = rounds;
-  
-  if (reward > 0) {
-    document.getElementById('winRounds').textContent += ` - Gain: ${reward} pièces`;
-  }
   
   document.getElementById('winMessage').classList.add('active');
 }
