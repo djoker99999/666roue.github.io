@@ -39,6 +39,9 @@ body::before {
   max-width: 1800px;
   margin: 20px auto;
   padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 30px;
 }
 
 header {
@@ -54,6 +57,7 @@ header {
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 215, 0, 0.3);
+  grid-column: 1 / -1;
 }
 
 h1 {
@@ -251,15 +255,16 @@ canvas.spinning {
 }
 
 .betControls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
   margin-top: 30px;
   padding: 20px;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 12px;
   border: 1px solid rgba(255, 215, 0, 0.3);
   backdrop-filter: blur(10px);
+  height: fit-content;
 }
 
 .betOption {
@@ -271,7 +276,6 @@ canvas.spinning {
   background: rgba(30, 30, 35, 0.7);
   transition: all 0.3s ease;
   border: 2px solid transparent;
-  min-height: 200px;
   justify-content: center;
 }
 
@@ -324,8 +328,8 @@ canvas.spinning {
 }
 
 .betImage {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   object-fit: contain;
   border-radius: 8px;
 }
@@ -338,6 +342,7 @@ canvas.spinning {
   margin-top: 30px;
   text-align: center;
   backdrop-filter: blur(10px);
+  grid-column: 1 / -1;
 }
 
 .jackpot h2 {
@@ -363,31 +368,31 @@ canvas.spinning {
 }
 
 .jackpot-rose {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
 .jackpot-progress {
-  width: 100%;
-  height: 20px;
+  width: 60%;
+  height: 15px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  margin-top: 10px;
+  margin: 10px auto;
 }
 
 .jackpot-progress-bar {
   height: 100%;
   background: linear-gradient(90deg, #ff6b6b, #ffd700);
-  border-radius: 10px;
+  border-radius: 8px;
   transition: width 0.5s ease;
   width: 0%;
 }
 
 .jackpot-counter {
   margin-top: 10px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #4ecdc4;
 }
 
@@ -399,6 +404,7 @@ canvas.spinning {
   margin-top: 30px;
   text-align: center;
   backdrop-filter: blur(10px);
+  grid-column: 1 / -1;
 }
 
 .stats h2 {
@@ -525,6 +531,9 @@ canvas.spinning {
   .wheelsContainer {
     grid-template-columns: repeat(2, 1fr);
   }
+  .wrap {
+    grid-template-columns: 1fr;
+  }
   .betControls {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -566,18 +575,6 @@ canvas.spinning {
 </header>
 
 <div class="wheelsContainer" id="wheelsContainer"></div>
-
-<div class="jackpot">
-  <h2>🎰 JACKPOT</h2>
-  <div class="jackpot-display">
-    <div class="jackpot-value" id="jackpotValue">0</div>
-    <img src="https://i.ibb.co/N2nrF4t3/IMG-7349-Photoroom.png" alt="Rose du Jackpot" class="jackpot-rose">
-  </div>
-  <div class="jackpot-progress">
-    <div class="jackpot-progress-bar" id="jackpotProgress"></div>
-  </div>
-  <div class="jackpot-counter" id="jackpotCounter">Prochain jackpot dans: 5 tours</div>
-</div>
 
 <div class="betControls">
   <div class="betOption" id="tofuOption">
@@ -630,6 +627,18 @@ canvas.spinning {
   </div>
 </div>
 
+<div class="jackpot">
+  <h2>🎰 JACKPOT</h2>
+  <div class="jackpot-display">
+    <div class="jackpot-value" id="jackpotValue">0</div>
+    <img src="https://i.ibb.co/N2nrF4t3/IMG-7349-Photoroom.png" alt="Rose du Jackpot" class="jackpot-rose">
+  </div>
+  <div class="jackpot-progress">
+    <div class="jackpot-progress-bar" id="jackpotProgress"></div>
+  </div>
+  <div class="jackpot-counter" id="jackpotCounter">Prochain +1 dans: 5 tours</div>
+</div>
+
 <div class="stats">
 <h2>📊 STATISTIQUES</h2>
 <div class="statsGrid">
@@ -655,7 +664,7 @@ canvas.spinning {
 <p id="winDescription">Vous avez obtenu 6 fois :</p>
 <div class="winColor" id="winColorDisplay"></div>
 <p id="winRoundsText">En <span id="winRounds">0</span> tours !</p>
-<div class="jackpotWin" id="jackpotWin" style="display: none;">🎰 JACKPOT GAGNÉ ! 🎰</div>
+<div class="jackpotWin" id="jackpotWin" style="display: none;">🎰 JACKPOT GAGNÉ : <span id="jackpotWinValue">0</span> 🎰</div>
 <button onclick="closeWinMessage()" style="margin-top: 20px; padding: 12px 24px; background: linear-gradient(to bottom, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">Continuer</button>
 </div>
 </div>
@@ -705,7 +714,7 @@ let currentBetOption = null;
 // Variables pour le jackpot
 let jackpotValue = 0;
 let jackpotCounter = 0;
-const JACKPOT_TRIGGER = 5;
+const JACKPOT_INCREMENT = 5; // Tous les 5 tours
 
 class Wheel {
   constructor(canvasId, index) {
@@ -960,23 +969,21 @@ function initWheels() {
 
 function updateJackpot() {
   document.getElementById('jackpotValue').textContent = jackpotValue;
-  const progress = (jackpotCounter / JACKPOT_TRIGGER) * 100;
+  const progress = (jackpotCounter % JACKPOT_INCREMENT / JACKPOT_INCREMENT) * 100;
   document.getElementById('jackpotProgress').style.width = `${progress}%`;
-  document.getElementById('jackpotCounter').textContent = `Prochain jackpot dans: ${JACKPOT_TRIGGER - jackpotCounter} tours`;
+  const toursRestants = JACKPOT_INCREMENT - (jackpotCounter % JACKPOT_INCREMENT);
+  document.getElementById('jackpotCounter').textContent = `Prochain +1 dans: ${toursRestants} tours`;
 }
 
 function addToJackpot() {
   jackpotCounter++;
   
-  // Ajouter une contribution fixe au jackpot
-  jackpotValue += 10;
+  // Ajouter +1 au jackpot tous les 5 tours
+  if (jackpotCounter % JACKPOT_INCREMENT === 0) {
+    jackpotValue += 1;
+  }
   
   updateJackpot();
-  
-  // Vérifier si le jackpot doit être déclenché
-  if (jackpotCounter >= JACKPOT_TRIGGER) {
-    triggerJackpot();
-  }
 }
 
 function triggerJackpot() {
@@ -989,6 +996,7 @@ function triggerJackpot() {
   document.getElementById('winColorDisplay').style.display = 'none';
   document.getElementById('winRoundsText').style.display = 'none';
   document.getElementById('jackpotWin').style.display = 'block';
+  document.getElementById('jackpotWinValue').textContent = jackpotValue;
   
   // Réinitialiser le jackpot
   jackpotValue = 0;
@@ -1023,9 +1031,6 @@ function placeBet(betType) {
   
   currentBetOption = betType;
   
-  // Ajouter au jackpot
-  addToJackpot();
-  
   // Lancer les roues selon l'option choisie
   playAllWheels(option.turns);
 }
@@ -1036,13 +1041,16 @@ async function playAllWheels(count) {
   document.getElementById('stopBtn').disabled = false;
   
   let winInRound = 0;
+  let jackpotWon = false;
   
   for (let i = 0; i < count; i++) {
     const promises = wheels.map(wheel => wheel.spin());
     await Promise.all(promises);
     
     totalTurns++;
-    updateStats();
+    
+    // Ajouter au jackpot à chaque tour
+    addToJackpot();
     
     // Vérifier si toutes les roues ont le même résultat
     const results = wheels.map(w => w.result);
@@ -1054,14 +1062,20 @@ async function playAllWheels(count) {
       winInRound = i + 1;
       createParticles();
       
-      // Réinitialiser l'affichage de victoire normal
-      document.getElementById('winTitle').textContent = '🎉 VICTOIRE ! 🎉';
-      document.getElementById('winDescription').textContent = 'Vous avez obtenu 6 fois :';
-      document.getElementById('winColorDisplay').style.display = 'block';
-      document.getElementById('winRoundsText').style.display = 'block';
-      document.getElementById('jackpotWin').style.display = 'none';
-      
-      setTimeout(() => showWinMessage(firstColor, winInRound), 500);
+      // Vérifier si c'est un jackpot (6 couleurs identiques)
+      if (jackpotValue > 0) {
+        jackpotWon = true;
+        triggerJackpot();
+      } else {
+        // Réinitialiser l'affichage de victoire normal
+        document.getElementById('winTitle').textContent = '🎉 VICTOIRE ! 🎉';
+        document.getElementById('winDescription').textContent = 'Vous avez obtenu 6 fois :';
+        document.getElementById('winColorDisplay').style.display = 'block';
+        document.getElementById('winRoundsText').style.display = 'block';
+        document.getElementById('jackpotWin').style.display = 'none';
+        
+        setTimeout(() => showWinMessage(firstColor, winInRound), 500);
+      }
       
       wheels.forEach((wheel, i) => {
         document.getElementById(`wheelWrap${i}`).classList.add('winner');
@@ -1081,11 +1095,13 @@ async function playAllWheels(count) {
   document.getElementById('stopBtn').disabled = true;
   
   // Réinitialiser la sélection
-  if (currentBetOption) {
+  if (currentBetOption && !jackpotWon) {
     document.getElementById(`${currentBetOption}Option`).classList.remove('active');
     document.getElementById(`${currentBetOption}Btn`).classList.remove('active');
     currentBetOption = null;
   }
+  
+  updateStats();
 }
 
 function startGame() {
