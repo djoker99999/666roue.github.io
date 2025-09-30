@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Jeu des 6 Roues - Casino</title>
+<style>
+:root{
+  --txt: #eef0f2;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: url('https://c.wallhere.com/photos/2e/52/brand_League_of_Legends_video_games-226243.jpg!d') center center / cover no-repeat fixed;
+  color: var(--txt);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+.wrap {
+  max-width: 1800px;
+  margin: 20px auto;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+select, input, button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(40, 40, 45, 0.8);
+  color: var(--txt);
+  font-size: 0.95rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+}
+
+select:focus, input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #4ecdc4;
+}
+
+button {
+  cursor: pointer;
+  font-weight: 600;
+  background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+  border: 1px solid #444;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#startBtn {
+  background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+}
+
+#stopBtn {
+  background: linear-gradient(to bottom, #F44336, #B71C1C);
+}
+
+#resetBtn {
+  background: linear-gradient(to bottom, #FF9800, #E65100);
+}
+
+#speedBtn {
+  background: linear-gradient(to bottom, #9C27B0, #4A148C);
+}
+
+.wheelsContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin: 30px 0;
+}
+
+.wheelWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.5s ease;
+}
+
+.wheelWrap.winner {
+  border-color: #ffd700;
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+  animation: winnerPulse 1s infinite;
+}
+
+@keyframes winnerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.wheelLabel {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #ffd700;
+  font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+}
+
+.canvasContainer {
+  position: relative;
+  display: inline-block;
+}
+
+canvas {
+  border-radius: 50%;
+  box-shadow: var(--shadow), 0 0 30px rgba(255, 215, 0, 0.3);
+  transition: transform 0.5s ease;
+}
+
+canvas.spinning {
+  animation: wheelGlow 1.5s infinite alternate;
+}
+
+@keyframes wheelGlow {
+  0% { box-shadow: var(--shadow), 0 0 20px rgba(255, 215, 0, 0.3); }
+  100% { box-shadow: var(--shadow), 0 0 40px rgba(255, 215, 0, 0.8); }
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 40px solid #d62828;
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+  z-index: 10;
+}
+
+.wheel-pointer::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: -10px;
+  width: 20px;
+  height: 20px;
+  background: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffd700;
+}
+
+.light-spot {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
+  opacity: 0.3;
+  animation: rotating-light 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotating-light {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.wheel-shine {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.7) 0%, transparent 50%);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.wheelResult {
+  margin-top: 15px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  min-width: 120px;
+  text-align: center;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+}
+
+.stats {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  margin-top: 30px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.stats h2 {
+  margin: 0 0 20px 0;
+  color: #ffd700;
+  font-size: 1.8rem;
+  font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.statItem {
+  background: rgba(20, 20, 25, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #222;
+  transition: transform 0.3s ease;
+}
+
+.statItem:hover {
+  transform: translateY(-3px);
+}
+
+.statItem h3 {
+  margin: 0 0 10px 0;
+  color: #4ecdc4;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.statItem .value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.winMessage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.winMessage.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.winContent {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+  max-width: 500px;
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+  animation: winScale 0.5s ease;
+}
+
+@keyframes winScale {
+  0% { transform: scale(0.5); }
+  100% { transform: scale(1); }
+}
+
+.winContent h2 {
+  font-size: 3rem;
+  margin: 0 0 20px 0;
+  color: #ffd700;
+}
+
+.winContent p {
+  font-size: 1.4rem;
+  margin: 10px 0;
+}
+
+.winColor {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100;
+  animation: fall linear forwards;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@media(max-width: 1200px){
+  .wheelsContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(max-width: 768px){
+  .wheelsContainer {
+    grid-template-columns: 1fr;
+  }
+  h1 {
+    font-size: 1.5rem;
+  }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>🎡 Jeu des 6 Roues de Casino</h1>
+<div class="controls">
+<button id="startBtn">🎯 LANCER</button>
+<button id="stopBtn" disabled>⏹️ ARRÊTER</button>
+<label style="color: #ccc;">Max tours:</label>
+<input type="number" id="maxTurns" value="100" min="1" max="10000" style="width:90px">
+<button id="speedBtn">⚡ ACCÉLÉRER</button>
+<button id="resetBtn">🔄 RESET</button>
+</div>
+</header>
+
+<div class="wheelsContainer" id="wheelsContainer"></div>
+
+<div class="stats">
+<h2>📊 STATISTIQUES</h2>
+<div class="statsGrid">
+<div class="statItem">
+<h3>Tours Joués</h3>
+<div class="value" id="totalTurns">0</div>
+</div>
+<div class="statItem">
+<h3>Victoires</h3>
+<div class="value" id="totalWins">0</div>
+</div>
+<div class="statItem">
+<h3>Tour Actuel</h3>
+<div class="value" id="currentRound">0</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="winMessage" id="winMessage">
+<div class="winContent">
+<h2>🎉 VICTOIRE ! 🎉</h2>
+<p>Vous avez obtenu 6 fois :</p>
+<div class="winColor" id="winColorDisplay"></div>
+<p>En <span id="winRounds">0</span> tours !</p>
+<button onclick="closeWinMessage()" style="margin-top: 20px; padding: 12px 24px; background: linear-gradient(to bottom, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">Continuer</button>
+</div>
+</div>
+
+<script>
+const colors = ["Blanc", "Jaune", "Vert", "Bleu", "Orange", "Rouge"];
+
+const colorStyles = {
+  'Blanc': ['#ffffff', '#f0f0f0'],
+  'Jaune': ['#ffd166', '#ffc145'],
+  'Vert': ['#2ecc71', '#27ae60'],
+  'Bleu': ['#3498db', '#2980b9'],
+  'Orange': ['#ffa166', '#ff8f45'],
+  'Rouge': ['#ff6b6b', '#ff5252']
+};
+
+const wheelTextures = {
+  base: {
+    base: ['#f1c27d', '#d99a4a'],
+    highlight: '#ffd700',
+    shadow: '#8c5e24',
+    border: '#704214',
+    pattern: '#daa520'
+  }
+};
+
+let wheels = [];
+let isPlaying = false;
+let totalTurns = 0;
+let totalWins = 0;
+let currentRound = 0;
+let isFastMode = false;
+let spinDuration = 2000;
+
+class Wheel {
+  constructor(canvasId, index) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext('2d');
+    this.index = index;
+    this.angle = 0;
+    this.spinning = false;
+    this.result = null;
+    this.resultEl = document.getElementById(`result${index}`);
+    this.setCanvasSize();
+  }
+
+  setCanvasSize() {
+    const size = 300;
+    const dpr = window.devicePixelRatio || 1;
+    this.canvas.style.width = size + 'px';
+    this.canvas.style.height = size + 'px';
+    this.canvas.width = size * dpr;
+    this.canvas.height = size * dpr;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.draw();
+  }
+
+  draw() {
+    const size = this.canvas.clientWidth;
+    const center = size / 2;
+    const radius = center - 12;
+    const num = colors.length;
+    const arc = (2 * Math.PI) / num;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.save();
+    this.ctx.translate(center, center);
+    this.ctx.rotate(this.angle);
+
+    const texture = wheelTextures.base;
+
+    // Dégradé de fond
+    const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    gradient.addColorStop(0, texture.base[0]);
+    gradient.addColorStop(0.7, texture.base[1]);
+    gradient.addColorStop(1, texture.shadow);
+
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+    this.ctx.fillStyle = gradient;
+    this.ctx.fill();
+
+    // Bordure décorative
+    this.ctx.strokeStyle = texture.border;
+    this.ctx.lineWidth = 4;
+    this.ctx.stroke();
+
+    // Motif de points sur la bordure
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, radius + 2, 0, 2 * Math.PI);
+    this.ctx.setLineDash([5, 3]);
+    this.ctx.strokeStyle = texture.highlight;
+    this.ctx.lineWidth = 2;
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+
+    // Segments de couleur
+    for (let i = 0; i < num; i++) {
+      const start = i * arc;
+      const label = colors[i];
+      const colorsGrad = colorStyles[label] || ['#cccccc', '#aaaaaa'];
+      const fill = (i % 2 === 0) ? colorsGrad[0] : colorsGrad[1];
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, 0);
+      this.ctx.arc(0, 0, radius, start, start + arc);
+      this.ctx.closePath();
+
+      // Dégradé pour chaque segment
+      const segmentGradient = this.ctx.createLinearGradient(
+        Math.cos(start) * radius / 2,
+        Math.sin(start) * radius / 2,
+        Math.cos(start + arc) * radius,
+        Math.sin(start + arc) * radius
+      );
+      segmentGradient.addColorStop(0, fill);
+      segmentGradient.addColorStop(1, i % 2 === 0 ? colorsGrad[1] : colorsGrad[0]);
+
+      this.ctx.fillStyle = segmentGradient;
+      this.ctx.fill();
+
+      this.ctx.strokeStyle = '#fff';
+      this.ctx.lineWidth = 1;
+      this.ctx.stroke();
+
+      // Texte sur les segments
+      this.ctx.save();
+      this.ctx.rotate(start + arc / 2);
+      const fontSize = 12;
+      this.ctx.font = `bold ${fontSize}px Arial`;
+      this.ctx.textAlign = 'right';
+      this.ctx.fillStyle = '#000';
+      this.ctx.fillText(label, radius - 8, 6);
+      this.ctx.restore();
+    }
+
+    // Centre de la roue
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, 15, 0, 2 * Math.PI);
+
+    const centerGradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 15);
+    centerGradient.addColorStop(0, texture.highlight);
+    centerGradient.addColorStop(1, texture.shadow);
+    this.ctx.fillStyle = centerGradient;
+    this.ctx.fill();
+
+    this.ctx.strokeStyle = texture.border;
+    this.ctx.lineWidth = 2;
+    this.ctx.stroke();
+
+    // Petit cercle au centre
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+    this.ctx.fillStyle = '#222';
+    this.ctx.fill();
+
+    this.ctx.restore();
+
+    // Indicateur
+    this.ctx.fillStyle = '#d62828';
+    this.ctx.beginPath();
+    this.ctx.moveTo(center - 14, 8);
+    this.ctx.lineTo(center + 14, 8);
+    this.ctx.lineTo(center, 36);
+    this.ctx.closePath();
+
+    const pointerGradient = this.ctx.createLinearGradient(center - 14, 8, center + 14, 8);
+    pointerGradient.addColorStop(0, '#ff5252');
+    pointerGradient.addColorStop(1, '#b33939');
+    this.ctx.fillStyle = pointerGradient;
+    this.ctx.fill();
+
+    this.ctx.strokeStyle = '#900';
+    this.ctx.lineWidth = 2;
+    this.ctx.stroke();
+
+    // Cercle rouge à la base de l'indicateur
+    this.ctx.beginPath();
+    this.ctx.arc(center, 8, 10, 0, 2 * Math.PI);
+    this.ctx.fillStyle = '#d62828';
+    this.ctx.fill();
+    this.ctx.strokeStyle = '#900';
+    this.ctx.lineWidth = 2;
+    this.ctx.stroke();
+  }
+
+  spin() {
+    if (this.spinning) return Promise.resolve();
+
+    this.spinning = true;
+    this.canvas.classList.add('spinning');
+
+    const num = colors.length;
+    const arc = (2 * Math.PI) / num;
+    const targetIndex = Math.floor(Math.random() * num);
+    const center_i = targetIndex * arc + arc / 2;
+    const rotations = 4 + Math.floor(Math.random() * 2);
+    const finalRotation = -Math.PI / 2 - center_i + rotations * 2 * Math.PI;
+    const startRotation = this.angle;
+    const duration = spinDuration;
+    let startTime = null;
+
+    return new Promise(resolve => {
+      const animate = (ts) => {
+        if (!startTime) startTime = ts;
+        const elapsed = ts - startTime;
+        const t = Math.min(1, elapsed / duration);
+        const ease = 1 - Math.pow(1 - t, 3);
+        this.angle = startRotation + (finalRotation - startRotation) * ease;
+        this.draw();
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          this.angle = ((this.angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          this.result = colors[targetIndex];
+          this.resultEl.textContent = this.result;
+          this.resultEl.style.color = colorStyles[this.result][0];
+          this.canvas.classList.remove('spinning');
+          this.spinning = false;
+          resolve(this.result);
+        }
+      };
+      requestAnimationFrame(animate);
+    });
+  }
+
+  reset() {
+    this.angle = 0;
+    this.result = null;
+    this.resultEl.textContent = '-';
+    this.resultEl.style.color = '#eef0f2';
+    this.canvas.classList.remove('spinning');
+    this.draw();
+  }
+}
+
+function initWheels() {
+  const container = document.getElementById('wheelsContainer');
+  container.innerHTML = '';
+  wheels = [];
+
+  for (let i = 0; i < 6; i++) {
+    const wheelWrap = document.createElement('div');
+    wheelWrap.className = 'wheelWrap';
+    wheelWrap.id = `wheelWrap${i}`;
+
+    const label = document.createElement('div');
+    label.className = 'wheelLabel';
+    label.textContent = `Roue ${i + 1}`;
+
+    const canvasContainer = document.createElement('div');
+    canvasContainer.className = 'canvasContainer';
+
+    const pointer = document.createElement('div');
+    pointer.className = 'wheel-pointer';
+
+    const lightSpot = document.createElement('div');
+    lightSpot.className = 'light-spot';
+
+    const shine = document.createElement('div');
+    shine.className = 'wheel-shine';
+
+    const canvas = document.createElement('canvas');
+    canvas.id = `wheel${i}`;
+
+    canvasContainer.appendChild(pointer);
+    canvasContainer.appendChild(lightSpot);
+    canvasContainer.appendChild(shine);
+    canvasContainer.appendChild(canvas);
+
+    const result = document.createElement('div');
+    result.className = 'wheelResult';
+    result.id = `result${i}`;
+    result.textContent = '-';
+
+    wheelWrap.appendChild(label);
+    wheelWrap.appendChild(canvasContainer);
+    wheelWrap.appendChild(result);
+    container.appendChild(wheelWrap);
+
+    wheels.push(new Wheel(`wheel${i}`, i));
+  }
+}
+
+async function playRound() {
+  currentRound++;
+  totalTurns++;
+  updateStats();
+
+  const maxTurns = parseInt(document.getElementById('maxTurns').value) || 100;
+  if (currentRound > maxTurns) {
+    isPlaying = false;
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = true;
+    alert(`Maximum de ${maxTurns} tours atteint sans victoire !`);
+    return;
+  }
+
+  const promises = wheels.map(wheel => wheel.spin());
+  await Promise.all(promises);
+
+  const results = wheels.map(w => w.result);
+  const firstColor = results[0];
+  const allSame = results.every(color => color === firstColor);
+
+  if (allSame) {
+    totalWins++;
+    updateStats();
+    createParticles();
+    setTimeout(() => showWinMessage(firstColor), 500);
+    isPlaying = false;
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = true;
+
+    wheels.forEach((wheel, i) => {
+      document.getElementById(`wheelWrap${i}`).classList.add('winner');
+    });
+  } else {
+    if (isPlaying) {
+      await new Promise(r => setTimeout(r, isFastMode ? 100 : 500));
+      playRound();
+    }
+  }
+}
+
+function startGame() {
+  if (isPlaying) return;
+
+  isPlaying = true;
+  currentRound = 0;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('stopBtn').disabled = false;
+
+  wheels.forEach((wheel, i) => {
+    document.getElementById(`wheelWrap${i}`).classList.remove('winner');
+  });
+
+  playRound();
+}
+
+function stopGame() {
+  isPlaying = false;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('stopBtn').disabled = true;
+}
+
+function resetGame() {
+  stopGame();
+  totalTurns = 0;
+  totalWins = 0;
+  currentRound = 0;
+  wheels.forEach(wheel => wheel.reset());
+  wheels.forEach((wheel, i) => {
+    document.getElementById(`wheelWrap${i}`).classList.remove('winner');
+  });
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('totalTurns').textContent = totalTurns;
+  document.getElementById('totalWins').textContent = totalWins;
+  document.getElementById('currentRound').textContent = currentRound;
+}
+
+function showWinMessage(color) {
+  document.getElementById('winColorDisplay').textContent = color;
+  document.getElementById('winColorDisplay').style.color = colorStyles[color][0];
+  document.getElementById('winRounds').textContent = currentRound;
+  document.getElementById('winMessage').classList.add('active');
+}
+
+function closeWinMessage() {
+  document.getElementById('winMessage').classList.remove('active');
+}
+
+function createParticles() {
+  for (let i = 0; i < 50; i++) {
+    setTimeout(() => {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * window.innerWidth + 'px';
+      particle.style.top = '-10px';
+      particle.style.width = '10px';
+      particle.style.height = '10px';
+      particle.style.background = ['#ffd700', '#ff6b6b', '#4ecdc4', '#2ecc71', '#ffa166', '#ffffff'][Math.floor(Math.random() * 6)];
+      particle.style.borderRadius = '50%';
+      particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+      document.body.appendChild(particle);
+
+      setTimeout(() => particle.remove(), 5000);
+    }, i * 30);
+  }
+}
+
+function toggleSpeed() {
+  isFastMode = !isFastMode;
+  spinDuration = isFastMode ? 500 : 2000;
+  const speedBtn = document.getElementById('speedBtn');
+  speedBtn.textContent = isFastMode ? '🐌 RALENTIR' : '⚡ ACCÉLÉRER';
+  speedBtn.style.background = isFastMode ?
+    'linear-gradient(to bottom, #FF9800, #E65100)' :
+    'linear-gradient(to bottom, #9C27B0, #4A148C)';
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('stopBtn').addEventListener('click', stopGame);
+document.getElementById('resetBtn').addEventListener('click', resetGame);
+document.getElementById('speedBtn').addEventListener('click', toggleSpeed);
+
+initWheels();
+updateStats();
+</script>
+</body>
+</html>
