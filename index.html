@@ -250,6 +250,95 @@ canvas.spinning {
   font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
 }
 
+.betControls {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.betOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgba(30, 30, 35, 0.7);
+  transition: all 0.3s ease;
+  min-width: 180px;
+  border: 2px solid transparent;
+}
+
+.betOption:hover {
+  background: rgba(40, 40, 45, 0.8);
+  transform: translateY(-3px);
+}
+
+.betOption.active {
+  background: rgba(50, 50, 55, 0.9);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.betOption h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+  color: #ffd700;
+}
+
+.betOption p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+  color: #ccc;
+  text-align: center;
+}
+
+.betOption .cost {
+  font-weight: bold;
+  color: #ff6b6b;
+}
+
+.betOption .turns {
+  font-weight: bold;
+  color: #4ecdc4;
+}
+
+.betBtn {
+  padding: 12px 20px;
+  margin-top: 10px;
+  background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+  border: 1px solid #444;
+  border-radius: 8px;
+  color: var(--txt);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.betBtn:hover {
+  background: linear-gradient(to bottom, #4a4a4a, #3a3a3a);
+  transform: translateY(-2px);
+}
+
+.betBtn.active {
+  background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+}
+
+.betImage {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
 .stats {
   background: rgba(0, 0, 0, 0.3);
   padding: 25px;
@@ -382,6 +471,10 @@ canvas.spinning {
   h1 {
     font-size: 1.5rem;
   }
+  .betControls {
+    flex-direction: column;
+    gap: 15px;
+  }
 }
 </style>
 </head>
@@ -401,6 +494,24 @@ canvas.spinning {
 
 <div class="wheelsContainer" id="wheelsContainer"></div>
 
+<div class="betControls">
+  <div class="betOption" id="rosaOption">
+    <img src="https://i.ibb.co/7JsBRrCn/IMG-5885.png" alt="Rosa" class="betImage">
+    <h3>Rosa</h3>
+    <p>1 tour de toutes les roues</p>
+    <p class="cost">Coût: 10 pièces</p>
+    <button class="betBtn" id="rosaBtn">Jouer Rosa</button>
+  </div>
+  
+  <div class="betOption" id="donutsOption">
+    <img src="https://i.ibb.co/8n9Jczm6/IMG-6061.png" alt="Donuts" class="betImage">
+    <h3>Donuts</h3>
+    <p>5 tours de toutes les roues</p>
+    <p class="cost">Coût: 30 pièces</p>
+    <button class="betBtn" id="donutsBtn">Jouer Donuts</button>
+  </div>
+</div>
+
 <div class="stats">
 <h2>📊 STATISTIQUES</h2>
 <div class="statsGrid">
@@ -415,6 +526,10 @@ canvas.spinning {
 <div class="statItem">
 <h3>Tour Actuel</h3>
 <div class="value" id="currentRound">0</div>
+</div>
+<div class="statItem">
+<h3>Pièces</h3>
+<div class="value" id="coins">1000</div>
 </div>
 </div>
 </div>
@@ -459,6 +574,8 @@ let totalWins = 0;
 let currentRound = 0;
 let isFastMode = false;
 let spinDuration = 2000;
+let coins = 1000;
+let currentBetOption = null;
 
 class Wheel {
   constructor(canvasId, index) {
@@ -711,6 +828,91 @@ function initWheels() {
   }
 }
 
+function placeBet(betType) {
+  if (isPlaying) {
+    alert("Veuillez attendre la fin de la partie en cours.");
+    return;
+  }
+  
+  const cost = betType === 'rosa' ? 10 : 30;
+  
+  if (coins < cost) {
+    alert("Vous n'avez pas assez de pièces !");
+    return;
+  }
+  
+  coins -= cost;
+  updateStats();
+  
+  // Mettre à jour l'option sélectionnée
+  document.querySelectorAll('.betOption').forEach(option => {
+    option.classList.remove('active');
+  });
+  
+  document.querySelectorAll('.betBtn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  document.getElementById(`${betType}Option`).classList.add('active');
+  document.getElementById(`${betType}Btn`).classList.add('active');
+  
+  currentBetOption = betType;
+  
+  // Lancer les roues selon l'option choisie
+  if (betType === 'rosa') {
+    playAllWheels(1);
+  } else {
+    playAllWheels(5);
+  }
+}
+
+async function playAllWheels(count) {
+  isPlaying = true;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('stopBtn').disabled = false;
+  
+  for (let i = 0; i < count; i++) {
+    const promises = wheels.map(wheel => wheel.spin());
+    await Promise.all(promises);
+    
+    // Vérifier si toutes les roues ont le même résultat
+    const results = wheels.map(w => w.result);
+    const firstColor = results[0];
+    const allSame = results.every(color => color === firstColor);
+    
+    if (allSame) {
+      totalWins++;
+      updateStats();
+      createParticles();
+      setTimeout(() => showWinMessage(firstColor), 500);
+      
+      wheels.forEach((wheel, i) => {
+        document.getElementById(`wheelWrap${i}`).classList.add('winner');
+      });
+      
+      // Récompense pour victoire
+      coins += currentBetOption === 'rosa' ? 100 : 300;
+      updateStats();
+      break;
+    }
+    
+    if (i < count - 1) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+  
+  isPlaying = false;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('stopBtn').disabled = true;
+  
+  // Réinitialiser la sélection
+  if (currentBetOption) {
+    document.getElementById(`${currentBetOption}Option`).classList.remove('active');
+    document.getElementById(`${currentBetOption}Btn`).classList.remove('active');
+    currentBetOption = null;
+  }
+}
+
 async function playRound() {
   currentRound++;
   totalTurns++;
@@ -778,10 +980,23 @@ function resetGame() {
   totalTurns = 0;
   totalWins = 0;
   currentRound = 0;
+  coins = 1000;
   wheels.forEach(wheel => wheel.reset());
   wheels.forEach((wheel, i) => {
     document.getElementById(`wheelWrap${i}`).classList.remove('winner');
   });
+  
+  // Réinitialiser les sélections de mise
+  document.querySelectorAll('.betOption').forEach(option => {
+    option.classList.remove('active');
+  });
+  
+  document.querySelectorAll('.betBtn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  currentBetOption = null;
+  
   updateStats();
 }
 
@@ -789,6 +1004,7 @@ function updateStats() {
   document.getElementById('totalTurns').textContent = totalTurns;
   document.getElementById('totalWins').textContent = totalWins;
   document.getElementById('currentRound').textContent = currentRound;
+  document.getElementById('coins').textContent = coins;
 }
 
 function showWinMessage(color) {
@@ -835,6 +1051,8 @@ document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('stopBtn').addEventListener('click', stopGame);
 document.getElementById('resetBtn').addEventListener('click', resetGame);
 document.getElementById('speedBtn').addEventListener('click', toggleSpeed);
+document.getElementById('rosaBtn').addEventListener('click', () => placeBet('rosa'));
+document.getElementById('donutsBtn').addEventListener('click', () => placeBet('donuts'));
 
 initWheels();
 updateStats();
