@@ -136,6 +136,10 @@ h1 {
   background: linear-gradient(to bottom, #FF1744, #C51162);
 }
 
+#universSpeedBtn {
+  background: linear-gradient(to bottom, #00B0FF, #0069C0);
+}
+
 .wheelsContainer {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -586,6 +590,7 @@ canvas.spinning {
   <button id="stopBtn" disabled>⏹️ ARRÊTER</button>
   <button id="speedBtn">⚡ ACCÉLÉRER</button>
   <button id="superSpeedBtn">🚀 SUPER VITESSE</button>
+  <button id="universSpeedBtn">🌌 VITESSE UNIVERS</button>
   <button id="resetBtn">🔄 RESET</button>
 </div>
 
@@ -731,6 +736,7 @@ let totalWins = 0;
 let jackpotsWon = 0;
 let isFastMode = false;
 let isSuperFastMode = false;
+let isUniversSpeedMode = false;
 let spinDuration = 2000;
 let currentBetOption = null;
 
@@ -1109,7 +1115,7 @@ async function playAllWheels(count) {
     }
     
     if (i < count - 1) {
-      await new Promise(r => setTimeout(r, isSuperFastMode ? 10 : (isFastMode ? 50 : 300)));
+      await new Promise(r => setTimeout(r, isUniversSpeedMode ? 1 : (isSuperFastMode ? 10 : (isFastMode ? 50 : 300))));
     }
   }
   
@@ -1233,11 +1239,15 @@ function createJackpotParticles() {
 }
 
 function toggleSpeed() {
-  if (isSuperFastMode) {
+  if (isSuperFastMode || isUniversSpeedMode) {
     isSuperFastMode = false;
+    isUniversSpeedMode = false;
     const superSpeedBtn = document.getElementById('superSpeedBtn');
     superSpeedBtn.textContent = '🚀 SUPER VITESSE';
     superSpeedBtn.style.background = 'linear-gradient(to bottom, #FF1744, #C51162)';
+    const universSpeedBtn = document.getElementById('universSpeedBtn');
+    universSpeedBtn.textContent = '🌌 VITESSE UNIVERS';
+    universSpeedBtn.style.background = 'linear-gradient(to bottom, #00B0FF, #0069C0)';
   }
   
   isFastMode = !isFastMode;
@@ -1250,11 +1260,15 @@ function toggleSpeed() {
 }
 
 function toggleSuperSpeed() {
-  if (isFastMode) {
+  if (isFastMode || isUniversSpeedMode) {
     isFastMode = false;
+    isUniversSpeedMode = false;
     const speedBtn = document.getElementById('speedBtn');
     speedBtn.textContent = '⚡ ACCÉLÉRER';
     speedBtn.style.background = 'linear-gradient(to bottom, #9C27B0, #4A148C)';
+    const universSpeedBtn = document.getElementById('universSpeedBtn');
+    universSpeedBtn.textContent = '🌌 VITESSE UNIVERS';
+    universSpeedBtn.style.background = 'linear-gradient(to bottom, #00B0FF, #0069C0)';
   }
   
   isSuperFastMode = !isSuperFastMode;
@@ -1266,12 +1280,34 @@ function toggleSuperSpeed() {
     'linear-gradient(to bottom, #FF1744, #C51162)';
 }
 
+function toggleUniversSpeed() {
+  if (isFastMode || isSuperFastMode) {
+    isFastMode = false;
+    isSuperFastMode = false;
+    const speedBtn = document.getElementById('speedBtn');
+    speedBtn.textContent = '⚡ ACCÉLÉRER';
+    speedBtn.style.background = 'linear-gradient(to bottom, #9C27B0, #4A148C)';
+    const superSpeedBtn = document.getElementById('superSpeedBtn');
+    superSpeedBtn.textContent = '🚀 SUPER VITESSE';
+    superSpeedBtn.style.background = 'linear-gradient(to bottom, #FF1744, #C51162)';
+  }
+  
+  isUniversSpeedMode = !isUniversSpeedMode;
+  spinDuration = isUniversSpeedMode ? 20 : 2000; // 10 fois plus rapide que la super vitesse
+  const universSpeedBtn = document.getElementById('universSpeedBtn');
+  universSpeedBtn.textContent = isUniversSpeedMode ? '🐌 MODE NORMAL' : '🌌 VITESSE UNIVERS';
+  universSpeedBtn.style.background = isUniversSpeedMode ?
+    'linear-gradient(to bottom, #4CAF50, #2E7D32)' :
+    'linear-gradient(to bottom, #00B0FF, #0069C0)';
+}
+
 // Initialisation des événements
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('stopBtn').addEventListener('click', stopGame);
 document.getElementById('resetBtn').addEventListener('click', resetGame);
 document.getElementById('speedBtn').addEventListener('click', toggleSpeed);
 document.getElementById('superSpeedBtn').addEventListener('click', toggleSuperSpeed);
+document.getElementById('universSpeedBtn').addEventListener('click', toggleUniversSpeed);
 
 // Événements pour les boutons de mise
 document.getElementById('tofuBtn').addEventListener('click', () => placeBet('tofu'));
